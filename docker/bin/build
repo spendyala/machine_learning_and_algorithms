@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# smile
+#docker build -t vpendyala/python-ml-algo:p3.7-slim-stretch .
+
+docker build -t vpendyala/python-ml-algo:p3.7-slim-ml-algo -f Dockerfile .
