@@ -116,6 +116,8 @@ RUN jupyter serverextension enable --py jupyterlab \
         @mflevine/jupyterlab_html \
         @jupyterlab/hub-extension
 
+ADD root/tmp/notebook.json /root/.jupyter/nbconfig/notebook.json
+ADD root/tmp/notebook.json /home/spendyala/.jupyter/nbconfig/notebook.json
 ADD root/etc/jupyter/jupyter_notebook_config.py /home/spendyala/.jupyter/jupyter_notebook_config.py
 RUN chown -R spendyala /home/spendyala/.jupyter
 
