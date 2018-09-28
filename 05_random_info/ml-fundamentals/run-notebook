@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+# This works on linux but not on OSX
+#SCRIPT_PATH="$(dirname $(realpath $0))"
+SCRIPT_PATH=$(cd "$(dirname $0)"; pwd)
+cd $SCRIPT_PATH
+
+ML_IMAGE=${ML_IMAGE:-ml-fundamentals}
+RUN_BUILD=${RUN_BUILD:-build}
+DOCKER_DS_DIFFS=${DOCKER_DS_DIFFS:-no_diffs}
+OPEN_BROWSER=${OPEN_BROWSER:-yes}
+FORCE_PULL=${FORCE_PULL:-no}
+
+for i
+do
+    if [[ "$i" = "--no-browser" ]]; then
+        OPEN_BROWSER=no
+    elif [[ "$i" = "--no-build" ]]; then
+        RUN_BUILD=no
+		elif [[ "$i" = "--force-pull" ]]; then
+				FORCE_PULL=yes
+    fi
+done
+
+if [[ ! -z $DOCKER_HOST ]]; then
+    echo -e "*** WARNING: The DOCKER_HOST env has been set, if this does not point to your local instance you may run into problems ***"
+fi
+
+# For now removing the requirement for docker-utils as we don't have a 
+#   requirement for python3 to be installed or that pip package to be installed
+if [[ "$FORCE_PULL" = "yes" ]]; then
+    docker pull rappdw/docker-ds
+fi
+
+
+if [[ "$RUN_BUILD" = "build" ]]; then
+    echo -e "\n*** Building the docker image ***"
+
+		if [[ -e "${SCRIPT_PATH}/docker/Dockerfile.custom" ]]; then
+				echo -e "docker/Dockerfile.custom exists, using that for build"
+				DOCKERFILE="docker/Dockerfile.custom"
+		else
+    		DOCKERFILE="docker/Dockerfile"
+    fi
+
+    echo -e "docker build -t $ML_IMAGE -f $DOCKERFILE $SCRIPT_PATH"
+    docker build -t $ML_IMAGE -f $DOCKERFILE $SCRIPT_PATH
+
+    if [[ $? -ne 0 ]]; then
+        echo "Failed to build image"
+        exit 1
+    fi
+else
+		echo -e "\n*** Build was not requested, skipping ***"
+fi
+
+DOCKER_ENV="-e NOTEBOOK_MODE=lab"
+if [ "$DOCKER_DS_DIFFS" != "no_diffs" ]; then
+    DOCKER_ENV="-e DOCKER_DS_DIFFS=1"
+fi
+
+date_stamp=$(date "+%Y_%m_%d_%H.%M.%S")
+name="${USER}_notebook_${date_stamp}"
+
+volume_mounts="--mount type=bind,source=$SCRIPT_PATH,target=/home/jovyan/project"
+if [[ -d "$HOME/.aws" ]]; then
+    echo "We have a $HOME/.aws directory, mounting"
+    volume_mounts="$volume_mounts --mount type=bind,source=${HOME}/.aws,target=/home/jovyan/.aws"
+fi
+
+if [[ -d "$PWD/.jupyter" ]]; then
+		echo "We have a $PWD/.jupyter directory, mounting"
+    volume_mounts="$volume_mounts --mount type=bind,source=${PWD}/.jupyter,target=/home/jovyan/.jupyter"
+fi
+
+run_command="docker run --rm -it -p 8888:8888 --init -e PYTHONPATH=/home/jovyan/project --name $name $DOCKER_ENV $volume_mounts $ML_IMAGE"
+
+open_browser() {
+    # This sleep time is arbitrary and may not be exact on every system
+    sleep 4
+		echo -e "\n*** Opening default browser to http://localhost:8888/lab ***\n"
+		if which xdg-open 2>&1 >> /dev/null; then
+    		xdg-open http://localhost:8888/lab
+		elif which open 2>&1 >> /dev/null; then
+			open http://localhost:8888/lab
+		else
+			echo -e "\n*** No open or xdg-open on system, can't start default browser ***\n"
+		fi
+}
+if [[ $OPEN_BROWSER = "yes" ]]; then
+	  open_browser &
+else
+	  echo -e "\n*** --no-browser was supplied, will not open browser ***"
+fi
+
+echo -e "\n*** Starting the docker container ***"
+echo -e "$run_command"
+$run_command
+

@@ -66,7 +66,7 @@ If you use docker-utils, the following configuration will make a notebook availa
 ```ini
 [notebook]
 volumes=--mount type=bind,source={project_root},target=/home/spendyala/project -v /data:/data --mount type=bind,source=/Users/{user}/.aws,target=/home/spendyala/.aws
-ports=-p 9999:9999
+ports=-p 9999:8888
 ```
 
 ### Related Extensions

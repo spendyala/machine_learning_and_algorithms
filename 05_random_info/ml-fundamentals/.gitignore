@@ -1,0 +1,9 @@
+*/.ipynb_checkpoints
+*/.diffs
+.ideals
+.data
+.jupyter
+Dockerfile.custom
+__pycache__
+*.pyc
+*.ipynb_checkpoints
