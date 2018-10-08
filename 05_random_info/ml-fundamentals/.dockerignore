@@ -1,1 +1,9 @@
 .data
+.diffs
+.ipynb_checkpoints
+activate
+reveal.js
+06-Visualization/docker
+.git
+.idea
+06-Visualization/data.*.dat*

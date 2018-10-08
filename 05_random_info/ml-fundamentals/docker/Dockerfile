@@ -13,5 +13,15 @@ RUN chown -R jovyan /home/jovyan/.jupyter; \
     groupmod -g 2005 node; \
     usermod -u 1000 jovyan
 
+RUN mkdir -p /home/jovyan/mnist; \
+    cd /home/jovyan/mnist; \
+    wget -q https://s3-us-west-2.amazonaws.com/resero2/datasets/tsne-perf-test/data.2500.mnist.dat.gz; \
+    gunzip *.gz
+
+RUN pip install \
+        umap-learn \
+        tsne-mp
+
+RUN apt-get install libgomp1
 
 
